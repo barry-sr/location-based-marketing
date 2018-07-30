@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Plot Project</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 90%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="point">
+      <input type="text" id="lat">
+      <br>
+      <input type="text" id="lng">
+      <input type="submit" value="search" onclick="findPointOnpolygon()">
+    </div> 
+    <script>
+
+      function initMap() {
+
+        var map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: -34.397, lng: 150.644},
+          zoom: 8
+        });
+
+        var drawingManager = new google.maps.drawing.DrawingManager({
+          drawingMode: google.maps.drawing.OverlayType.MARKER,
+          drawingControl: true,
+          drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_CENTER,
+            drawingModes: ['polygon', 'circle']
+          },
+          markerOptions: {icon: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png'},
+          circleOptions: {
+            fillColor: '#FF0000',
+            fillOpacity: 1,
+            strokeWeight: 5,
+            clickable: false,
+            editable: true,
+            zIndex: 1
+          }
+        });
+        drawingManager.setMap(map);
+      
+      google.maps.event.addListener(drawingManager, 'overlaycomplete', function(polygon) {
+         storePoly(polygon);
+          });
+      
+      function storePoly(polygon){
+        //console.log('full',polygon.overlay);
+       var polygon=polygon.overlay.getPath().getArray();
+       console.log('path',polygon);
+       console.log(polygon);
+       var data = JSON.stringify(polygon);
+
+       //console.log(data);
+          $.ajax({
+                    type: 'POST',
+                    url: 'http://localhost/project/saveData.php',
+                    data: jQuery.param({data: data}),
+                    dataType: "json",
+                    sucess: function(res){
+                      console.log(res);
+                    }
+                });
+          }
+}
+
+
+    function findPointOnpolygon(){
+                var lat = document.getElementById('lat').value;
+                var lng=  document.getElementById('lng').value;
+                var latLng = new google.maps.LatLng(lat , lng);
+                
+                $.get('fetchPoly.php', (data, status)=>{
+                    var data = JSON.parse(data);
+                    var newpolygon = new google.maps.Polygon({
+                    paths: data,
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: '#FF0000',
+                    fillOpacity: 0.35
+                    });
+                   //console.log(data);
+                   //console.log(newpolygon);
+                   setTimeout(()=>{
+                   //console.log(newpolygon);
+                   var resultColor =google.maps.geometry.poly.containsLocation(latLng, newpolygon) ? console.log('found') : console.log('not found');
+                   },3000);
+
+                });
+                  
+      }
+
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAMMYiE-JJBJGtUNxzSXtcQPCcLp-cDgKE&libraries=drawing&callback=initMap"async defer></script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- nu sentral coords wtihin the raduis -->
+<!-- SELECT
+  id, (
+    6371 * acos (
+      cos ( radians(3.1334) )
+      * cos( radians( lat ) )
+      * cos( radians( lng ) - radians(101.6869) )
+      + sin ( radians(3.1334) )
+      * sin( radians( lat ) )
+    )
+  ) AS distance
+FROM circle
+HAVING distance < 1
+ORDER BY distance
+LIMIT 0 , 20; -->
+
+<!-- muzum coords out the raduis -->
+<!--  SELECT
+  id, (
+    6371 * acos (
+      cos ( radians(3.1325) )
+      * cos( radians( lat ) )
+      * cos( radians( lng ) - radians(101.6961) )
+      + sin ( radians(3.1325) )
+      * sin( radians( lat ) )
+    )
+  ) AS distance
+FROM circle
+HAVING distance < (SELECT radius FROM circle)
+ORDER BY distance
+ -->
+//boolean true or false
+<!-- 
+ SELECT id, ( 6371 * acos ( cos ( radians(3.1334) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(101.6869) ) + sin ( radians(3.1334) ) * sin( radians( lat ) ) ) ) < (SELECT radius FROM circle) FROM circle -->

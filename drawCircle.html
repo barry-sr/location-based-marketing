@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <title>Pot Project</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+ <style>
+      #map {
+        width: 70%;
+        height: 98%;
+      }
+      
+      .draw{
+       background-color: #8064A2 !important;
+       }
+      .save{
+        background-color: #4BB543;
+      }
+
+      #error{
+        color: #4BB543;
+      }
+
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+</head>
+<body>
+  <div class="container-fluid" style="height:100%; width: 100%;"> 
+    <div class="row" style="height:100%; width: 100%;">
+      <div class="col" id="map"></div>
+         <div class="col-sm-3">
+            <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" class="form-control" id="title" required>
+            <label for="description">Description:</label>
+            <textarea class="form-control" rows="2" maxlength="1000" id="description" required></textarea>
+            <label for="startDate">Start Date & Time:</label>
+            <input type='datetime-local' class="form-control" id='startDate' required/>
+            <label for="endDate">End Date & Time:</label>
+            <input type='datetime-local' class="form-control" id='endDate' required/><br>
+            </div>
+            <div class="form-group">
+            <input class="form-control" type="text" id="address" placeholder="address" autocomplete="off" required>
+            <br>
+            <input class="form-control" type="number" id="radius" placeholder="radius" required><br>
+            <!-- <button type="button" class="btn draw" onclick="drawCirlce()">draw</button> -->
+            <input class="btn draw" type="submit" value="draw" onclick="drawCirlce()">
+            <input class="btn save" type="submit" value="save" onclick="saveCircleInfo()"><br><br>
+            <div class="table result"></div>
+            <input class="btn" type="submit" value="track active user" onclick="trackActiveUserWithinActiveCircle()">
+            </div>
+          </div>
+       </div>
+   </div>
+<script>
+var  map;
+var circle;
+function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+    center: {lat: 3.1390, lng: 101.6869},
+    zoom: 9
+  });
+  var address = document.getElementById("address");
+  var autocomplete = new google.maps.places.Autocomplete(address);
+
+  //check whether if point exist within the circle then triger
+  google.maps.event.addListener(map, "click", function(e){
+      var lat= e.latLng.lat();
+      var lng= e.latLng.lng();
+      var latLng= {lat:lat, lng: lng};
+      // var latLng=lat+' '+lng;
+    $.ajax({
+      method: "POST",
+      url: 'http://localhost/project/findPointsWithinCircles.php',
+      data: {data: latLng}
+    })
+      .done(function( msg ){
+         alert(msg);
+      });
+
+   });
+
+}
+
+function drawCirlce() {
+  var address = document.getElementById("address").value; 
+  var radius= Number(document.getElementById('radius').value);
+  if(address ==null || address =="" && radius==null || radius ==""){
+    alert("Empty field");
+}else{
+  var geocoder = new google.maps.Geocoder();
+  geocoder.geocode({ 'address': address}, function(results, status){
+    if (status == google.maps.GeocoderStatus.OK) {          
+     //marker       
+    var marker = new google.maps.Marker({
+        map: map,
+        draggable: true,
+        position: results[0].geometry.location
+     });
+        marker.setMap(map);
+    //circle
+          circle = new google.maps.Circle({
+          strokeColor: '#008000',
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: '#008000',
+          fillOpacity: 0.5,
+          map: map,
+          center: results[0].geometry.location ,
+          radius: radius
+        });
+  circle.setMap(map);
+    } else {
+     alert("error: " + status);
+  }
+ });
+
+}
+}
+
+function saveCircleInfo(){
+var circleInfo=[];
+var title=document.getElementById('title').value;
+var description= document.getElementById('description').value;
+var startDate= document.getElementById('startDate').value;
+var endDate= document.getElementById('endDate').value;
+var lat=circle.getCenter().lat();
+var lng=circle.getCenter().lng();
+var radius=(circle.getRadius()) * 0.001;
+if(title ==null || title =="" && description==null || description =="" && startDate==null || startDate =="" && endDate==null || endDate ==""){
+  alert("Empty field");
+} else{
+    circleInfo.push(title, description, startDate, endDate, lat, lng, radius);
+    $.ajax({
+      method: "POST",
+      url: "http://localhost/project/saveCircle.php",
+      data: {data: circleInfo}
+    })
+      .done(function( msg ){
+        alert(msg);
+      });
+    }
+
+}
+
+function trackActiveUserWithinActiveCircle(){
+ $.ajax({
+  method: "POST",
+  url: "http://localhost/project/statisticofUsers.php"
+})
+  .done(function( msg ){
+    $(".result").html(msg);
+  });
+
+}
+
+
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAMMYiE-JJBJGtUNxzSXtcQPCcLp-cDgKE&libraries=places&callback=initMap"
+    async defer></script>
+  </body>
+</html>

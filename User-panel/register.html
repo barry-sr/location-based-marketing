@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Kode is a Premium Bootstrap Admin Template, It's responsive, clean coded and mobile friendly">
+  <meta name="keywords" content="bootstrap, admin, dashboard, flat admin template, responsive," />
+  <title>Plot -Registration Page</title>
+
+  <!-- ========== Css Files ========== -->
+  <link href="css/root.css" rel="stylesheet">
+  <style type="text/css">
+    body{background: #F5F5F5;}
+  </style>
+  </head>
+  <body>
+
+    <div class="login-form">
+      <form id="signUp"> 
+        <!-- action="http://localhost/project/src/signUp.php" method="post" onsubmit="return signUpForm(this) -->
+        <div class="top">
+          <h1>Register</h1>
+          <h4>Join to access our features!</h4>
+        </div>
+        <div class="form-area">
+          <div class="group">
+            <input type="text" class="form-control" placeholder="Username" id="username" name="username" required>
+            <i class="fa fa-user"></i>
+          </div>
+          <div class="group">
+            <input type="text" class="form-control" placeholder="E-mail" id="email" name="email" required>
+            <i class="fa fa-envelope-o"></i>
+          </div>
+          <div class="group">
+            <input type="password" class="form-control" id="pass1" placeholder="Password" name="password" required>
+            <i class="fa fa-key"></i>
+          </div>
+          <div class="group">
+            <input type="password" class="form-control" id="pass2" placeholder="Password again" required>
+            <i class="fa fa-key"></i>
+            <span id="password" style="color: red;"></span>
+          </div>
+          <div class="group">
+            <input type="date" class="form-control" id="b_date" placeholder="Birth Date" name="bdate" required>
+            <i class="fa fa-calendar"></i>
+          </div>
+          <div class="group">
+               <div class="radio radio-info radio-inline">
+                    <input type="radio" id="inlineRadio1" value="M" name="gender" checked>
+                    <label for="inlineRadio1">Male </label>
+                </div>
+                <div class="radio radio-inline">
+                    <input type="radio" id="inlineRadio2" value="F" name="gender">
+                    <label for="inlineRadio2">Female </label>
+                </div>
+          </div>
+          <button type="submit" class="btn btn-default btn-block" id="btn">REGISTER NOW</button>
+          <p id="span" style="padding-top: 10px;"></p>
+        </div>
+      </form>
+      <div class="footer-links row">
+        <div class="col-xs-6"><a href="login.html"><i class="fa fa-sign-in"></i> Login</a></div>
+        <div class="col-xs-6 text-right"><a href="#"><i class="fa fa-lock"></i> Forgot password</a></div>
+      </div>
+    </div>
+
+
+<!-- ================================================
+jQuery Library
+================================================ -->
+<script type="text/javascript" src="js/jquery.min.js"></script>
+
+
+<!-- validate the data and create user account -->
+<script>
+  $('#signUp').submit(function(e) {
+    e.preventDefault();
+    // var username= document.getElementById('username').value;
+    // var email=document.getElementById('email').value;
+    var pass1= $('#pass1').val();
+    var pass2= $('#pass2').val();
+    // var b_date=document.getElementById('b_date').value;
+    //var gender= $("input[name='gender']:checked").val();
+    if(pass1 !==pass2){
+      $( "#password" ).text( "password don't match!" ).show().fadeOut( 4000 );
+    }
+    else{
+      $("#span").text('Saving...');
+       $.ajax({
+          method: 'POST',
+          url: 'http://210.19.254.111/project/src/signUp.php',
+          data: $('#signUp').serialize()
+        })
+          .done(function(res){
+              if(res === "User created!"){
+                alert(res);
+                window.location.href = "login.html";
+              } else {
+                $("#span").text(res);
+                $("#span").css({"color": "red"});
+              }
+          });  
+    }
+
+});
+</script>
+
+</body>
+</html>

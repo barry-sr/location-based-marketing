@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Plot</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <style>
+      #map {
+        height: 100%;
+      }
+
+      #point{
+        padding-left: 10px;
+        padding-top: 10px
+      }
+
+      #circle{
+        padding-left: 500px;
+      }
+      #circlePoint{
+        padding-bottom: 500px;
+        padding-left: 10px;
+      }
+
+      html, body {
+        height: 90%;
+        margin: 0;
+        padding: 0;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    polygon<div id="point">
+      lat<input type="text" id="lat">
+      lng<input type="text" id="lng">
+      <input type="submit" value="Check" onclick="findPointWithinpolygon()">
+    </div> 
+    <div id="circle">
+      lat<input type="text" id="latitude">
+      lng<input type="text" id="longitude">
+      Raduis<input type="number" id="radius">
+      <input type="submit" value="draw" onclick="drawCirlce()"> 
+    </div>
+    Circle<div id="circlePoint">
+    lat<input type="text" id="latC">
+    lng<input type="text" id="lngC">
+    <input type="submit" value="Check" onclick="findPointWithinCircle()">
+    </div>
+    <script>
+
+  function initMap() {
+
+    var map = new google.maps.Map(document.getElementById('map'), {
+      center: {lat: 4.2105, lng: 101.9758},
+      zoom: 8
+    });
+
+    //polygon object
+    var drawingManager = new google.maps.drawing.DrawingManager({
+      drawingMode: google.maps.drawing.OverlayType.MARKER,
+      drawingControl: true,
+      drawingControlOptions: {
+        position: google.maps.ControlPosition.TOP_CENTER,
+        drawingModes: ['polygon']
+      },
+      markerOptions: {icon: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png'},
+      circleOptions: {
+        fillColor: '#FF0000',
+        fillOpacity: 1,
+        strokeWeight: 5,
+        clickable: false,
+        editable: false,
+        zIndex: 1
+      }
+    });
+    drawingManager.setMap(map);
+   
+   //overlaycomplete event for the polygon 
+   google.maps.event.addListener(drawingManager, 'overlaycomplete', function(e) {
+        var data = e.overlay.getPath().getArray();  
+        var polygonPointsArray =[];
+        var data= e.overlay.getPath();
+        for(var i=0; i < data.getLength(); i++){
+          polygonPointsArray.push(data.getAt(i).lat()+' '+data.getAt(i).lng());
+        }
+         $.ajax({
+          type: 'POST',
+          url: 'http://localhost/project/saveData.php',
+          data: jQuery.param({data: polygonPointsArray}),
+          sucess: function(res){
+            console.log(res);
+          }
+         });
+      });
+      
+ 
+ //function to draw circle 
+  window.drawCirlce= function() { 
+   var circlesObjectsArray =[];
+   var lat=  parseFloat(document.getElementById('latitude').value);
+   var lng=  parseFloat(document.getElementById('longitude').value);
+   var radius= Number(document.getElementById('radius').value);
+   //cirle object
+   var circle = new google.maps.Circle({
+            strokeColor: '#008000',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#008000',
+            fillOpacity: 0.5,
+            map: map,
+            center: {lat:lat, lng:lng},
+            radius: radius
+          });
+    circle.setMap(map);
+    
+     circlesObjectsArray.push(circle.getCenter().lat())
+     circlesObjectsArray.push(circle.getCenter().lng());
+     circlesObjectsArray.push(circle.getRadius());
+     for(var i=0; i <circlesObjectsArray.length; i++){
+     console.log(circlesObjectsArray[i]);  
+     }
+    
+      $.ajax({
+          type: 'POST',
+          url: 'http://localhost/project/saveCircle.php',
+          data: jQuery.param({data: circlesObjectsArray}),
+          sucess: function(res){
+            console.log(res);
+          }
+         });
+
+    
+    
+   }
+
+}
+    //function to find points within a polygon
+    function findPointWithinpolygon(){
+                var lat = document.getElementById('lat').value;
+                var lng=  document.getElementById('lng').value;
+                var latLng = lat+' '+lng;
+                $.ajax({
+                  type: 'POST',
+                  url: 'http://localhost/project/findPointsWithinPolygon.php',
+                  data: jQuery.param({data: latLng}),
+                  sucess: function(res){
+                    $("#result").html(res);
+                  }
+                 });
+                  
+      }
+
+
+ //function to find points within a circle
+    function findPointWithinCircle(){
+                var lat = document.getElementById('latC').value;
+                var lng=  document.getElementById('lngC').value;
+                //var latLng = lat+' '+lng;
+                var latLng= {lat:lat, lng: lng};
+                $.ajax({
+                  type: 'POST',
+                  url: 'http://localhost/project/findPointsWithinCircles.php',
+                  data: jQuery.param({data: latLng}),
+                  sucess: function(res){
+                    $("#result").html(res);
+                  }
+                 });
+                  
+      }
+
+
+
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAMMYiE-JJBJGtUNxzSXtcQPCcLp-cDgKE&libraries=drawing&callback=initMap"async defer></script>
+  </body>
+</html>
